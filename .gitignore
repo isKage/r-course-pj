@@ -5,3 +5,15 @@ data/CT
 PCA/*.png
 
 !*/readme.md
+
+# pycharm
+.idea/
+.DS_Store
+
+__pycache__/
+*/__pycache__/
+*.py[cod]
+*$py.class
+
+./checkpoints/*.pth
+!./checkpoints

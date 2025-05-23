@@ -1,0 +1,14 @@
+Classes:, ['cancer', 'normal']
+Total images: 3000
+
+DataLoaders created successfully!
+Train samples: 2100, Val samples: 450, Test samples: 450
+
+Model created successfully!
+Device: cpu
+Loss: CrossEntropyLoss
+Optimizer: Adam
+Epochs Num: 60
+Patience: 4
+
+Training Started!
