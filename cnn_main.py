@@ -4,9 +4,13 @@ import torch.optim as optim
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader, random_split
 
-from models import CNNModel
+from sklearn.metrics import confusion_matrix
+
+from models import ShallowCNNModel, CNNModel
 
 dataset_dir = "data/CT"  # /cancer and /normal
+param_path = "checkpoints/opt_model.pth"
+log_path = "logs/logs.txt"
 logs = ""  # 记录日志
 
 # 训练集图像变化
@@ -55,21 +59,24 @@ print("DataLoaders created successfully!")
 print(f"Train samples: {len(train_dataset)}, Val samples: {len(val_dataset)}, Test samples: {len(test_dataset)}")
 logs += f"DataLoaders created successfully!\n"
 logs += f"Train samples: {len(train_dataset)}, Val samples: {len(val_dataset)}, Test samples: {len(test_dataset)}\n\n"
+logs += f"Batch size: {batch_size}\n"
+logs += f"Number of classes: {num_classes}\n"
 
 # 2. 模型搭建
-model = CNNModel(num_classes=num_classes)
+model = CNNModel(num_classes=num_classes)  # CNNModel 和 ShallowCNNModel 2 个模型
 logs += f"Model created successfully!\n"
 
 # CPU or GPU
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model.to(device)
-logs += f"Device: {"cuda" if torch.cuda.is_available() else "cpu"}\n"
+logs += f"Device: {device}\n"
 
 # 损失函数和调优器
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.parameters(), lr=0.003)
+optimizer = optim.Adam(model.parameters(), lr=1e-4)
 logs += f"Loss: CrossEntropyLoss\n"
 logs += f"Optimizer: Adam\n"
+logs += f"Learning Rate: {optimizer.param_groups[0]['lr']}\n"
 
 # 超参数
 num_epochs = 60
@@ -129,8 +136,8 @@ for epoch in range(num_epochs):
         best_val_acc = val_acc
         epochs_no_improve = 0
         print("Validation improved, saving model...")
-        filename = model.save()
-        logs += f"Validation improved, saving model at {filename}\n"
+        torch.save(model.state_dict(), param_path)
+        logs += f"Validation improved, saving model at \"{param_path}\"\n"
     else:  # 未提升
         epochs_no_improve += 1
         print(f"No improvement for {epochs_no_improve} epochs.")
@@ -141,5 +148,43 @@ for epoch in range(num_epochs):
         logs += f"Early stopping triggered!\n"
         break
 
-with open("logs.txt", "w") as f:
+try:
+    logs += f"\nFinal Train Loss: {train_loss / total:.4f} | Train Acc: {train_acc:.2f}%"
+    logs += f"\nFinal Val Loss: {val_loss / total:.4f} | Val Acc: {val_acc:.2f}%"
+except ZeroDivisionError:
+    pass
+
+# 4. 测试
+model.load_state_dict(torch.load(param_path))
+model.to(device)
+model.eval()
+
+total, correct, test_loss = 0, 0, 0
+all_labels, all_preds = [], []
+
+# 开始测试
+logs += "\n\nTesting Started!\n\n"
+with torch.no_grad():
+    for images, labels in test_loader:
+        images, labels = images.to(device), labels.to(device)
+        outputs = model(images)
+        loss = criterion(outputs, labels)
+
+        test_loss += loss.item() * images.size(0)
+        all_labels.extend(labels.cpu().numpy())
+        all_preds.extend(outputs.argmax(1).cpu().numpy())
+        correct += (outputs.argmax(1) == labels).sum().item()
+        total += labels.size(0)
+
+test_loss /= total
+test_acc = 100 * correct / total
+print(f"Test Loss: {test_loss:.4f} | Test Accuracy: {test_acc:.2f}%")
+logs += f"Test Loss: {test_loss:.4f} | Test Accuracy: {test_acc:.2f}%\n"
+
+# Confusion Matrix
+cm = confusion_matrix(all_labels, all_preds)
+print("\nConfusion Matrix:\n", cm)
+logs += f"\nConfusion Matrix:\n{cm}"
+
+with open(log_path, "w") as f:
     f.write(logs)

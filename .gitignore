@@ -15,5 +15,6 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-./checkpoints/*.pth
-!./checkpoints
+# parameters
+checkpoints/*.pth
+!checkpoints/readme.md

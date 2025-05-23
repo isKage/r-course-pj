@@ -25,12 +25,25 @@ CT-Images 数据集包括 $1500$ 张正常肺部 CT 图，$1500$ 张患癌肺部
 ## 3 数据降维：PCA 主成分分析 & 池化
 
 
+
+
 ## 4 初步分析：聚类分析
 
 对于分类问题，一个简单的想法就是通过**聚类分析**。我们使用 `R` 语言的 `cluster` 包
 
 ## 5 二分类问题：Logistic 回归
 
+
+
 ## 6 拓展：卷积神经网络 CNN
+
+使用**卷积神经网络**可以进一步提高预测的准确率，本项目实现了 2 个神经网络用于展示 `ShallowCNNModel` 和 `CNNModel` ，实现代码位于 [cnn.py](models/cnn.py) 文件中。其中 `ShallowCNNModel` 网络架构以及训练预测主程序框架来自 Kaggle 开源代码 [lung-Ctscan](https://www.kaggle.com/code/saikrishnakowshik/lung-ctscan) 。`CNNModel` 是本项目实现的更深的卷积神经，预测效果更好。
+
+训练和预测日志可见 [logs](logs) 文件夹，其中 [logs_shallow.txt](logs/logs_shallow.txt) 为 lung-Ctscan 模型的日志， [logs.txt](logs/logs.txt) 为本项目模型的日志。 [checkpoints](checkpoints) 文件夹存储了训练后的模型参数，因为参数文件较大，故不上传。模型均在 Kaggle 提供的 GPU 环境下进行训练，结果如下所示。
+
+| Model             | Train Loss | Train Acu | Val Loss | Val Acu   | Test Loss | Test Acu  |
+| ----------------- | ---------- | --------- | -------- | --------- | --------- | --------- |
+| `ShallowCNNModel` | $0.6076$   | $94.52\%$ | $0.1507$ | $93.33\%$ | $0.1240$  | $94.89\%$ |
+| `CNNModel`        | $0.3526$   | $97.52\%$ | $0.1293$ | $95.11\%$ | $0.0835$  | $96.67\%$ |
 
 ## 7 总结

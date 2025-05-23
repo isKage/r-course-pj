@@ -1,0 +1,108 @@
+Classes:, ['cancer', 'normal']
+Total images: 3000
+
+DataLoaders created successfully!
+Train samples: 2100, Val samples: 450, Test samples: 450
+
+Batch size: 16
+Number of classes: 2
+Model created successfully!
+Device: cuda
+Loss: CrossEntropyLoss
+Optimizer: Adam
+Learning Rate: 0.0001
+Epochs Num: 60
+Patience: 4
+
+Training Started!
+
+=== Epoch 1/60 ===
+Train Loss: 0.5980 | Train Acc: 68.24%
+Val Loss: 0.4539 | Val Acc: 76.00%
+Validation improved, saving model at /checkpoints/opt_model.pth
+
+=== Epoch 2/60 ===
+Train Loss: 0.3087 | Train Acc: 87.05%
+Val Loss: 0.3093 | Val Acc: 85.11%
+Validation improved, saving model at /checkpoints/opt_model.pth
+
+=== Epoch 3/60 ===
+Train Loss: 0.2412 | Train Acc: 90.57%
+Val Loss: 0.2082 | Val Acc: 91.78%
+Validation improved, saving model at /checkpoints/opt_model.pth
+
+=== Epoch 4/60 ===
+Train Loss: 0.1970 | Train Acc: 91.24%
+Val Loss: 0.1787 | Val Acc: 93.78%
+Validation improved, saving model at /checkpoints/opt_model.pth
+
+=== Epoch 5/60 ===
+Train Loss: 0.1773 | Train Acc: 93.33%
+Val Loss: 0.1784 | Val Acc: 94.00%
+Validation improved, saving model at /checkpoints/opt_model.pth
+
+=== Epoch 6/60 ===
+Train Loss: 0.1575 | Train Acc: 94.14%
+Val Loss: 0.1795 | Val Acc: 93.33%
+No improvement for 1 epochs.
+
+=== Epoch 7/60 ===
+Train Loss: 0.1664 | Train Acc: 93.90%
+Val Loss: 0.1712 | Val Acc: 94.00%
+No improvement for 2 epochs.
+
+=== Epoch 8/60 ===
+Train Loss: 0.1240 | Train Acc: 95.43%
+Val Loss: 0.1438 | Val Acc: 94.22%
+Validation improved, saving model at /checkpoints/opt_model.pth
+
+=== Epoch 9/60 ===
+Train Loss: 0.1303 | Train Acc: 94.48%
+Val Loss: 0.1351 | Val Acc: 94.67%
+Validation improved, saving model at /checkpoints/opt_model.pth
+
+=== Epoch 10/60 ===
+Train Loss: 0.1096 | Train Acc: 95.81%
+Val Loss: 0.1161 | Val Acc: 95.11%
+Validation improved, saving model at /checkpoints/opt_model.pth
+
+=== Epoch 11/60 ===
+Train Loss: 0.0969 | Train Acc: 96.43%
+Val Loss: 0.1069 | Val Acc: 95.56%
+Validation improved, saving model at /checkpoints/opt_model.pth
+
+=== Epoch 12/60 ===
+Train Loss: 0.1005 | Train Acc: 96.43%
+Val Loss: 0.0868 | Val Acc: 97.33%
+Validation improved, saving model at /checkpoints/opt_model.pth
+
+=== Epoch 13/60 ===
+Train Loss: 0.0744 | Train Acc: 97.29%
+Val Loss: 0.1033 | Val Acc: 96.89%
+No improvement for 1 epochs.
+
+=== Epoch 14/60 ===
+Train Loss: 0.0658 | Train Acc: 97.67%
+Val Loss: 0.1418 | Val Acc: 95.11%
+No improvement for 2 epochs.
+
+=== Epoch 15/60 ===
+Train Loss: 0.0702 | Train Acc: 97.29%
+Val Loss: 0.0902 | Val Acc: 96.44%
+No improvement for 3 epochs.
+
+=== Epoch 16/60 ===
+Train Loss: 0.0756 | Train Acc: 97.52%
+Val Loss: 0.1293 | Val Acc: 95.11%
+No improvement for 4 epochs.
+Early stopping triggered!
+
+Final Train Loss: 0.3526 | Train Acc: 97.52%
+Final Val Loss: 0.1293 | Val Acc: 95.11%
+
+Testing Started!
+Test Loss: 0.0835 | Test Accuracy: 96.67%
+
+Confusion Matrix:
+[[217   9]
+ [  6 218]]
