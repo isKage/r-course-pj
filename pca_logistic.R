@@ -13,6 +13,7 @@ library(Matrix)
 library(irlba)
 library(MASS)
 
+# load img
 read_one_png <- function(file_path) {
     img <- image_read(file_path)
     img <- image_scale(img, "224x224!")
@@ -22,16 +23,18 @@ read_one_png <- function(file_path) {
     return(img_vector)
 }
 
-
+# transform the data into img and save
 to_img <- function(v, file_path) {
     img <- matrix(v, nrow = 224)
     img_norm <- (img - min(img)) / (max(img) - min(img))
     writePNG(img_norm, file_path)
 }
 
+# data dir
 normal_dir <- "data/CT/normal/"
 cancer_dir <- "data/CT/cancer/"
 
+# data file path
 normal_file_path <- list.files(normal_dir)
 normal_file_path <- paste(normal_dir, normal_file_path, sep = "")
 
@@ -42,40 +45,50 @@ length(normal_file_path) # 1500
 length(cancer_file_path) # 1500
 
 set.seed(114514)
-# 随机从正常和患癌中各抽取1000张图作为训练集
+# random n samples
 sampled_normal <- sample(normal_file_path, n)
 sampled_cancer <- sample(cancer_file_path, n)
 train_file_path <- c(sampled_normal, sampled_cancer)
 
+# load train data
 X <- matrix(0, nrow = N, ncol = 224 * 224) # (N, p)
 for (i in 1:N) {
     X[i, ] <- read_one_png(train_file_path[i])
 }
 
+# standarized
 X_centered <- scale(X, center = TRUE, scale = FALSE)
 
+
+# ======================= PCA =======================
 res_pca <- prcomp_irlba(X_centered, n = q)
 pca <- res_pca$rotation # (p, q)
 dim(pca)
 
+# save the PCA result, the feature figure
 for (i in 1:q) {
     to_img((pca[, i]), paste("PCA/pca", i, ".png", sep = ""))
 }
 
+# after PCA
 X.new <- X_centered %*% pca
 dim(X.new)
 
+
+# ======================= Train =======================
+# the label of train data
 is_cancer <- as.factor(rep(c(0, 1), each = n))
 
+# establish the data frame for logistic regression
 data <- data.frame(X.new, cancer = is_cancer)
 data$cancer <- as.factor(data$cancer)
 
+# logistic regression model
 model <- glm(cancer ~ ., data = data, family = binomial())
 summary(model)
 
 model.step <- step(model, direction = "both")
-
-summary(model.step)
+summary(model.step) # step
 # Call:
 # glm(formula = cancer ~ PC1 + PC2 + PC3 + PC4 + PC5 + PC6 + PC7 +
 #     PC8 + PC9 + PC10, family = binomial(), data = data)
@@ -110,53 +123,51 @@ exp(coef(model.step))
 #         PC6         PC7         PC8         PC9        PC10
 #   0.9811579   1.0273051   1.0344677   0.9797395   1.0917073
 
-# ==================================================
 
-# 测试集路径（每类剩下 500 张）
-# 从方才未入训练集的500个中随机抽取100个作为test集
+# ======================= Test =======================
 set.seed(1919810)
 complement_normal <- setdiff(normal_file_path, sampled_normal)
 complement_cancer <- setdiff(cancer_file_path, sampled_normal)
+
 test_file_path <- c(sample(complement_normal, 100), sample(complement_cancer, 100))
+
 n_test <- length(test_file_path)
 N_test <- n_test
 
-# 读取测试集图像
+# load test data
 X_test <- matrix(0, nrow = N_test, ncol = 224 * 224)
 for (i in 1:N_test) {
     X_test[i, ] <- read_one_png(test_file_path[i])
 }
 
-# 用训练集中心化均值来标准化测试集
+# standarized
 X_test_centered <- scale(X_test, center = attr(X_centered, "scaled:center"), scale = FALSE)
 
-# 使用训练集 PCA 的投影向量
+# PCA
 X_test_new <- X_test_centered %*% pca # (N_test, q)
 
-# 提取 stepwise 模型中使用的主成分变量名
+# rename the beta to: PC1, PC2, ..., PCq
 vars_used <- names(coef(model.step))[-1] # 去掉截距 (Intercept)
-
-# 给 PCA 投影后的列命名为 PC1, PC2, ..., PCq
 colnames(X_test_new) <- paste0("PC", 1:q)
 
-# 保留用于预测的主成分列
+# the final PCAs
 X_test_selected <- X_test_new[, vars_used, drop = FALSE]
 
-# 预测测试集
+# prediction
 prob_test <- predict(model.step, newdata = as.data.frame(X_test_new), type = "response")
-
 pred_test <- ifelse(prob_test >= 0.5, 1, 0)
 
-# 构造真实标签
+# the real label
 y_test <- rep(c(0, 1), each = 100)
 
+# Confuse Matrix
 table(pred_test, y_test)
 #          y_test
 # pred_test  0  1
 #         0 74 23
 #         1 26 77
 
-# 计算准确率
+# ACU
 accuracy <- mean(pred_test == y_test)
-cat("Test Accuracy:", accuracy, "\n")
-# Test Accuracy: 0.755
+cat("Test ACU:", accuracy, "\n")
+# Test ACU: 0.755

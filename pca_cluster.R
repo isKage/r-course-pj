@@ -1,3 +1,4 @@
+getwd()
 rm(list = ls())
 ls()
 n <- 1500
@@ -11,7 +12,7 @@ library(png)
 library(Matrix)
 library(irlba)
 
-# 读取和预处理函数保持不变
+# load img
 read_one_png <- function(file_path) {
   img <- image_read(file_path)
   img <- image_scale(img, "224x224!")
@@ -21,57 +22,55 @@ read_one_png <- function(file_path) {
   return(img_vector)
 }
 
+# transform into img and save
 to_img <- function(v, file_path) {
   img <- matrix(v, nrow = 224)
   img_norm <- (img - min(img)) / (max(img) - min(img))
   writePNG(img_norm, file_path)
 }
 
-# 路径设置
+# set the path to the file
 normal_dir <- "data/CT/normal"
 cancer_dir <- "data/CT/cancer"
 normal_file_path <- list.files(normal_dir, full.names = TRUE) # 1500个
 cancer_file_path <- list.files(cancer_dir, full.names = TRUE) # 1500个
 
-# --- 修改1: 随机抽取训练集和测试集 ---
-set.seed(12)
-# 从正常样本中随机选1000训练，剩余500中选100测试
-train_normal_idx <- sample(length(normal_file_path), n)
-test_normal_idx <- sample(setdiff(1:1500, train_normal_idx), 100)
-# 从癌症样本中随机选1000训练，剩余500中选100测试
-train_cancer_idx <- sample(length(cancer_file_path), n)
-test_cancer_idx <- sample(setdiff(1:1500, train_cancer_idx), 100)
+# all data index
+normal_idx <- 1:n
+cancer_idx <- 1:n
 
-# 构建训练集和测试集路径
-train_file_path <- c(normal_file_path[train_normal_idx], cancer_file_path[train_cancer_idx])
-test_file_path <- c(normal_file_path[test_normal_idx], cancer_file_path[test_cancer_idx])
+# all data path
+data_file_path <- c(normal_file_path[normal_idx], cancer_file_path[cancer_idx])
 
-# --- 修改2: 加载训练数据并计算PCA ---
-# 训练数据矩阵 (2000 x 50176)
-X_train <- t(sapply(train_file_path, read_one_png))
-dim(X_train)
+# all data matrix
+X <- t(sapply(data_file_path, read_one_png))
+dim(X) # n x p = 3000 x 50176
 
-# 中心化并保存均值
-X_centered <- scale(X_train, center = TRUE, scale = FALSE)
+# standarized
+X_centered <- scale(X, center = TRUE, scale = FALSE)
 center_mean <- attr(X_centered, "scaled:center")
 
-# 计算PCA
+# PCA
 res_pca <- prcomp_irlba(X_centered, n = q)
-pca_rotation <- res_pca$rotation # (50176 x 10)
+pca_rotation <- res_pca$rotation
+dim(pca_rotation) # p x q = 50176 x 10
 
-# 训练集降维结果
-X_train_pca <- X_centered %*% pca_rotation # (2000 x 10)
+# X after PCA
+X_pca <- X_centered %*% pca_rotation
+dim(X_pca) # n x q = 3000 x 10
 
-# --- 修改3: 在训练集上聚类 ---
-kmeans_train <- kmeans(X_train_pca, centers = 2, nstart = 25)
-cluster_train <- kmeans_train$cluster
+# begin cluster
+kmeans_res <- kmeans(X_pca, centers = 2, nstart = 25)
+cluster_res <- kmeans_res$cluster
+pred_label <- as.vector(cluster_res)
 
-# 训练集真实标签（前1000正常=1，后1000癌症=2）
+# real label: 1 -> normal, 2 -> cancer
 true_label_train <- rep(1:2, each = n)
-# 计算训练集准确率（考虑标签翻转）
+
+# ACU, as it is not predict the label, but for cluster
 accuracy_train <- max(
-  mean(cluster_train == true_label_train),
-  mean(3 - cluster_train == true_label_train)
+  mean(pred_label == true_label_train),
+  mean(3 - pred_label == true_label_train)
 )
-cat("训练集聚类准确率:", accuracy_train, "\n")
-# 训练集聚类准确率: 0.6356667
+cat("ACU: ", accuracy_train, "\n")
+# ACU: 0.6356667
