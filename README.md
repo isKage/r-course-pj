@@ -28,6 +28,74 @@ CT-Images 数据集包括 $1500$ 张正常胸腔 CT 截面图，$1500$ 张患癌
 
 由于原来的样本数据向量 $x \in \mathbb{R}^p,\quad p = 224\times 224 = 50176$ ，特征维度过高，难以进行分析和建模，故可以采用 **主成分分析 PCA** 方法进行降维。
 
+---
+
+主成分分析（Principal Component Analysis, PCA）由 Hotelling 于 1933 年首先提出 [[1]](#ref1) 。 目的是把多个变量压缩为少数几个综合指标（称为主成分），使得综合指标能够包含原来的多个变量的主要的信息。下面以总体主成分为例，进行算法推导：
+
+对于我们这个问题的每一个样本，在被抽样前均为随机变量 $\widetilde{X} \in \mathbb{R}^p$ ，设其协方差存在且为 $\Sigma \in \mathbb{R}^{p \times p}$ ，对协方差进行谱分解得到：
+
+```math
+\Sigma = P \Lambda P^T \notag
+```
+
+其中 $P \in \mathbb{R}^{p\times p}$ 为正交阵，而 $\Lambda \in \mathbb{R}^{p \times p}$ 为对角阵，且对角元素为 $\Sigma$ 的特征值，即 $\Lambda = diag(\lambda_1,\ \lambda_2,\ \cdots,\ \lambda_p)$ ，且特证值按降序排列 $\lambda_{i} \geq \lambda_{i+1}$ 。设 $p_j$ 为第 $j$ 个的特征向量，即 $P$ 的第 $j$ 列。则有 $\widetilde{X}$ 的第 $j$ 个主成分：
+
+```math
+Y_j = p_j^T \widetilde{X} \notag
+```
+
+记 $Y = \left[Y_1,\ Y_2,\ \cdots,\ Y_p\right] = P^T \widetilde{X} \in \mathbb{R}^p$ ，则有：
+
+```math
+Cov(Y) = Cov(P^T X) = P^T Cov(\widetilde{X}) P = P^T \Sigma P = P^TP\Lambda P^TP = \Lambda \notag
+```
+
+如上构造的主成分 $Y_j$ 为 $\widetilde{X}$ 的线性组合，且满足在 $Y_j \perp Y_k,\quad k = 1,\ 2,\ \cdots,\ j-1$  使得 $Var(Y_j)$ 最大的线性组合，直观地理解就是 $\widetilde{X}$ 在 $Y_j$ 方向上被尽可能的分开（方差尽可能大）。
+
+在本问题中，为实现降维，可以选择这 $p$ 个主成分的前 $q$ 个，即由原来样本 $x \in \mathbb{R}^p$ 降低到 $x' \in \mathbb{R}^q$ 。但这仍然存在问题，即数据维度 $p = 50176$ 远远大于样本量 $n = 3000$ ，同时我们也无法获得一个五万级别大小的矩阵的谱分解，所以下面提出一种更新的方法，借由矩阵 **奇异值分解（SVD 分解）**的思想计算。
+
+---
+
+如果我们已经获取到了样本信息，构造出了样本矩阵 $X \in \mathbb{R}^{n\times p}$ ，假设 $X$ 已经中心化，即 $\bar{X} = \bf{0} \in \mathbb{R}^p$ 。我们的目标是找到一组正交的向量 $v_1,\ v_2,\ \cdots,\ v_p \in \mathbb{R}^p$，将数据投影到这些方向上后，使得投影后的数据具有最大的方差，即：
+
+```math
+\max_{v_j \perp v_1,\ v_2,\ \cdots,\ v_{j-1}} Var(Xv_j) = \frac{1}{n} \frac{||Xv_j||^2}{||v_j||^2} = \frac{1}{n} \frac{v_j^T X^T X v_j}{v_j^Tv_j} \notag
+```
+
+由 <u>引理 1</u> ：正定阵 $A$ 第 $j$ 个特征值和特征向量为 $(\lambda_i,\ e_i),\quad \lambda_i \geq \lambda_{i+1}$ 则有
+
+```math
+\max_{x \perp e_1,\ e_2,\ \cdots,\ e_{j-1}} \frac{x^TAx}{x^Tx} = \lambda_j,\quad \text{when}\ \ x = e_{k} \notag
+```
+
+可知原问题最优解 $v_j^*$ 为 $X^TX$ 的第 $j$ 个特征向量。于是我们对 $X$ 进行 SVD 分解：
+
+```math
+X = U \Lambda V^T \notag
+```
+
+其中 $U \in \mathbb{R}^{n\times n},\ V \in \mathbb{R}^{p \times p}$ 且满足 $UU^T = I_n,\ VV^T = I_p$ 。而 $\Lambda \in \mathbb{R}^{n \times p}$ 为对角矩阵，主对角线为降序排列的奇异值，其他位置为零。注意到：
+
+```math
+X^TX = V\Lambda^T U^TU\Lambda V^T = V\Lambda^T \Lambda V^T \notag
+```
+
+注意到 $X^TX,\ \Lambda^T\Lambda,\ V \in \mathbb{R}^{p\times p}$ ，完全符合谱分解的形式，故 $V$ 的每一列均为 $X^TX$ 的特征向量，即这里的 $V$ 的每一列就是我们要找的最优 $v_j^*$ ，下面介绍如何更高效的求解 $X^TX$ 的特征向量。
+
+若记 $u \in \mathbb{R}^n$ 为 $XX^T \in \mathbb{R}^{n\times n}$ 的特征向量，特征值为 $w$ ，则有 $XX^T u = wu$ ，左乘 $X^T$ 有：
+
+```math
+X^TXX^Tu = (X^TX) \cdot X^Tu = X^T wu = w \cdot (X^Tu) \notag
+```
+
+故有 $X^Tu$ 为 $X^TX$ 的特征向量。所以我们可以通过求解 $XX^T$ 的特征向量 $u$ 进而推出 $X^TX$ 的特征向量 $v = X^Tu$ 。需要注意的是，$XX^T \in \mathbb{R}^{n \times n}$ 维度为 $n$ ，当样本量远小于特征量 $p$ 时（例如本问题），采用这个方法能极大的提高计算效率。同样地，为了降维，我们只需选取 $XX^T$ 的前 $q$ 个特征向量即可。
+
+---
+
+虽然上面的方法已经极大地节约了计算成本，但当遇见 $n$ 样本量同样巨大的问题（例如本问题），求解 $XX^T \in \mathbb{R}^{n \times n}$ 的特征向量仍然十分困难。而且，出于降维的目的，我们不需要所有的 $n$ 个特征向量，而只需要前 $q$ 大的特征值对应的特征向量，所以可以采用近似的方法，只计算前 $q$ 个特征向量。
+
+为了实现这个目标，G Golub, W Kahan 于 1965 年提出了 Golub-Kahan 双对角分解法 [[2]](#ref2) 用于求解 SVD 分解问题。而 J Baglama, L Reichel 于 2005 年进一步提出了 IRLBA 算法 [[3]](#ref3) 用于高效解决奇异值近似问题。
+
 ### 3.2 MaxPooling 最大池化
 
 除了使用主成分分析法，在计算机视觉中 **池化 Polling** 也是常见的图像降维、图像压缩方法。常见的池化操作有均值池化、最大池化，本项目采用最大池化尝试进行降维。
@@ -35,7 +103,7 @@ CT-Images 数据集包括 $1500$ 张正常胸腔 CT 截面图，$1500$ 张患癌
 
 ## 4 初步分析：聚类分析
 
-对于分类问题，一个简单的想法就是通过**聚类分析**。我们使用 `R` 语言的 `cluster` 包，使用 `K-Means` 算法，对所有数据（$3000$ 张图片）进行降维后 $x \in \mathbb{R}^q$ ，再进行二分类的聚类分析。
+对于分类问题，一个简单的想法就是通过 **聚类分析**。我们使用 `R` 语言的 `cluster` 包，使用 `K-Means` 算法，对所有数据（$3000$ 张图片）进行降维后 $x \in \mathbb{R}^q$ ，再进行二分类的聚类分析。
 
 对于样本 $x_i \in \mathbb{R}^q,\quad i=1,\ 2,\ \cdots,\ n$ 我们需要将其分为 $C_1,\ C_2,\ \cdots,\ C_k$ 类，使得簇内平方和误差最小：
 
@@ -47,7 +115,7 @@ CT-Images 数据集包括 $1500$ 张正常胸腔 CT 截面图，$1500$ 张患癌
 
 ## 5 二分类问题：Logistic 回归
 
-对于经过降维之后的数据向量 $x \in \mathbb{R}^q$ ，采用 **Logistic 回归**的方式进行二分类，标签为 `normal` 和 `cancer` ，从样本的 normal 和 cancer 中分别随机抽取 $1000$ 张图片，总共 $2000$ 张图片进行训练，对于剩下的 $500$ 张 normal 和 $500$ 张 cancer 数据作为测试集，用于检查模型的准确率。
+对于经过降维之后的数据向量 $x \in \mathbb{R}^q$ ，采用 **Logistic 回归** 的方式进行二分类，标签为 `normal` 和 `cancer` ，从样本的 normal 和 cancer 中分别随机抽取 $1000$ 张图片，总共 $2000$ 张图片进行训练，对于剩下的 $500$ 张 normal 和 $500$ 张 cancer 数据作为测试集，用于检查模型的准确率。
 
 对于 Logistic 回归模型，需要估计的参数为 $\beta \in \mathbb{R}^{q+1}$ ，记 $p = P(\text{cancer})$ 为患癌概率，在原始数据 $X$ 的第一列前增加一列全 $1$ 向量 $\bf{1} \in \mathbb{R}^n$ ，即有 $X = \left[\bf{1}\quad X \right]\in \mathbb{R}^{n\times (q+1)}$ ，于是有模型：
 
@@ -100,3 +168,13 @@ pred_test  0  1
 | `CNNModel`        | $0.3526$   | $97.52\%$ | $0.1293$ | $95.11\%$ | $0.0835$  | $96.67\%$ |
 
 ## 7 总结
+
+本项目完成了对胸腔截面 CT 医学图像进行二分类的任务，使用主成分分析（PCA）对图像进行特征提取和降维处理，利用 Logistic 模型作为分类器，实现了对数据集的二分类任务，最终测试集准确率达到 $75.50\%$。最后使用卷积神经网络进行进一步的分类，最终测试集准确率达到 $96.67\%$ 。
+
+## Reference
+
+[1] [Hotelling H. Analysis of a complex of statistical variables into principal components[J]. Journal of educational psychology, 1933, 24(6): 417.](https://psycnet.apa.org/record/1934-00645-001) <a id="ref1"></a>
+
+[2] [Golub G, Kahan W. Calculating the singular values and pseudo-inverse of a matrix[J]. Journal of the Society for Industrial and Applied Mathematics, Series B: Numerical Analysis, 1965, 2(2): 205-224.](https://epubs.siam.org/doi/abs/10.1137/0702016) <a id="ref2"></a>
+
+[3] [Baglama J, Reichel L. Augmented implicitly restarted Lanczos bidiagonalization methods[J]. SIAM Journal on Scientific Computing, 2005, 27(1): 19-42.](https://epubs.siam.org/doi/abs/10.1137/04060593X) <a id="ref3"></a>

@@ -1,6 +1,8 @@
 */.DS_Store
 
+# data
 data/CT
+data/MaxPool4
 
 PCA/*.png
 

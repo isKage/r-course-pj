@@ -127,7 +127,7 @@ exp(coef(model.step))
 # ======================= Test =======================
 set.seed(1919810)
 complement_normal <- setdiff(normal_file_path, sampled_normal)
-complement_cancer <- setdiff(cancer_file_path, sampled_normal)
+complement_cancer <- setdiff(cancer_file_path, sampled_cancer)
 
 test_file_path <- c(sample(complement_normal, 100), sample(complement_cancer, 100))
 
@@ -139,12 +139,14 @@ X_test <- matrix(0, nrow = N_test, ncol = 224 * 224)
 for (i in 1:N_test) {
     X_test[i, ] <- read_one_png(test_file_path[i])
 }
+dim(X_test)
 
 # standarized
 X_test_centered <- scale(X_test, center = attr(X_centered, "scaled:center"), scale = FALSE)
 
 # PCA
 X_test_new <- X_test_centered %*% pca # (N_test, q)
+dim(X_test_new)
 
 # rename the beta to: PC1, PC2, ..., PCq
 vars_used <- names(coef(model.step))[-1] # 去掉截距 (Intercept)
