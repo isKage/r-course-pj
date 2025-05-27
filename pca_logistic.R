@@ -89,39 +89,12 @@ summary(model)
 
 model.step <- step(model, direction = "both")
 summary(model.step) # step
-# Call:
-# glm(formula = cancer ~ PC1 + PC2 + PC3 + PC4 + PC5 + PC6 + PC7 +
-#     PC8 + PC9 + PC10, family = binomial(), data = data)
-
-# Coefficients:
-#              Estimate Std. Error z value Pr(>|z|)
-# (Intercept) -0.011446   0.054808  -0.209   0.8346
-# PC1          0.013574   0.001719   7.895 2.91e-15 ***
-# PC2         -0.020755   0.002167  -9.578  < 2e-16 ***
-# PC3         -0.014065   0.002778  -5.063 4.12e-07 ***
-# PC4         -0.005797   0.002829  -2.049   0.0405 *
-# PC5          0.035454   0.003586   9.888  < 2e-16 ***
-# PC6         -0.019022   0.003659  -5.198 2.01e-07 ***
-# PC7          0.026939   0.004148   6.494 8.36e-11 ***
-# PC8          0.033887   0.004835   7.009 2.41e-12 ***
-# PC9         -0.020469   0.005183  -3.949 7.85e-05 ***
-# PC10         0.087743   0.005790  15.154  < 2e-16 ***
-# ---
-# Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-# (Dispersion parameter for binomial family taken to be 1)
-
-#     Null deviance: 2772.6  on 1999  degrees of freedom
-# Residual deviance: 2055.1  on 1989  degrees of freedom
-# AIC: 2077.1
-
-# Number of Fisher Scoring iterations: 4
 
 exp(coef(model.step))
-# (Intercept)         PC1         PC2         PC3         PC4         PC5
-#   0.9886188   1.0136663   0.9794593   0.9860336   0.9942196   1.0360903
-#         PC6         PC7         PC8         PC9        PC10
-#   0.9811579   1.0273051   1.0344677   0.9797395   1.0917073
+# (Intercept)         PC1         PC2         PC3         PC4         PC5 
+#   0.9894906   1.0139567   0.9792491   0.9854668   1.0054750   1.0369355 
+#         PC6         PC7         PC8         PC9        PC10 
+#   0.9816089   1.0286717   1.0350578   0.9817046   0.9136114 
 
 
 # ======================= Test =======================
@@ -148,13 +121,6 @@ X_test_centered <- scale(X_test, center = attr(X_centered, "scaled:center"), sca
 X_test_new <- X_test_centered %*% pca # (N_test, q)
 dim(X_test_new)
 
-# rename the beta to: PC1, PC2, ..., PCq
-vars_used <- names(coef(model.step))[-1] # 去掉截距 (Intercept)
-colnames(X_test_new) <- paste0("PC", 1:q)
-
-# the final PCAs
-X_test_selected <- X_test_new[, vars_used, drop = FALSE]
-
 # prediction
 prob_test <- predict(model.step, newdata = as.data.frame(X_test_new), type = "response")
 pred_test <- ifelse(prob_test >= 0.5, 1, 0)
@@ -166,10 +132,10 @@ y_test <- rep(c(0, 1), each = 100)
 table(pred_test, y_test)
 #          y_test
 # pred_test  0  1
-#         0 74 23
-#         1 26 77
+#         0 75 23
+#         1 25 77
 
 # ACU
 accuracy <- mean(pred_test == y_test)
 cat("Test ACU:", accuracy, "\n")
-# Test ACU: 0.755
+# Test ACU: 0.76

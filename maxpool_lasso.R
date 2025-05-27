@@ -62,10 +62,12 @@ dim(x)
 y <- as.factor(rep(c(0, 1), each = n))
 
 cv_lasso <- cv.glmnet(x, y, family = "binomial", alpha = 1) # LASSO
+cv_lasso$lambda.min # [1] 0.002218767
+cv_lasso$lambda.1se # [1] 0.002551043
 
 selected_features <- which(coef(cv_lasso, s = "lambda.min") != 0)[-1] # 去掉截距项
 X_train_selected <- x[, selected_features]
-dim(X_train_selected)
+dim(X_train_selected) # [1] 2000  167
 
 # ======================= Test =======================
 set.seed(1919810)
@@ -85,6 +87,10 @@ dim(X_test)
 
 # 预测概率（正类的概率）
 prob_predictions <- predict(cv_lasso, X_test, type = "response")
+prob_predictions_with_lambda <- prob_predictions <- predict(cv_lasso, X_test, type = "response", s = "lambda.min")
+# dim(prob_predictions)
+# dim(prob_predictions_with_lambda)
+# all.equal(prob_predictions, prob_predictions_with_lambda)
 
 # 转换为类别预测（阈值=0.5）
 predictions <- as.vector(ifelse(prob_predictions > 0.5, 1, 0))
