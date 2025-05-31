@@ -74,7 +74,7 @@ set.seed(1919810)
 test_normal <- setdiff(normal_file_path, sampled_normal)
 test_cancer <- setdiff(cancer_file_path, sampled_cancer)
 
-test_file_path <- c(sample(test_normal, 300), sample(test_cancer, 300))
+test_file_path <- c(sample(test_normal, 500), sample(test_cancer, 500))
 
 n_test <- length(test_file_path)
 
@@ -86,21 +86,30 @@ for (i in 1:n_test) {
 dim(X_test)
 
 # 预测概率（正类的概率）
-prob_predictions <- predict(cv_lasso, X_test, type = "response")
-prob_predictions_with_lambda <- prob_predictions <- predict(cv_lasso, X_test, type = "response", s = "lambda.min")
+# prob_predictions <- predict(cv_lasso, X_test, type = "response")
+prob_predictions_with_lambda <- predict(cv_lasso, X_test, type = "response", s = "lambda.min")
+round(prob_predictions_with_lambda, 2)
+
 # dim(prob_predictions)
 # dim(prob_predictions_with_lambda)
 # all.equal(prob_predictions, prob_predictions_with_lambda)
 
-# 转换为类别预测（阈值=0.5）
-predictions <- as.vector(ifelse(prob_predictions > 0.5, 1, 0))
+# 转换为类别预测
+predictions <- as.vector(ifelse(prob_predictions_with_lambda > 0.5, 1, 0))
 length(predictions)
 
 y_test <- rep(c(0, 1), each = n_test / 2)
 length(y_test)
 
+table(y_test, predictions) # confusing matrix
+#       predictions
+# y_test   0   1
+#      0 494   6
+#      1  11 489
+
 sum(predictions == y_test) / n_test
-# [1] 0.9816667
+# [1] 0.9816667 when n_test = 300 * 2
+# [1] 0.983 when n_test = 500 * 2
 
 
 # ======================= Analysis =======================
