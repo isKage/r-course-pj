@@ -122,11 +122,20 @@ coefficients <- coef(cv_lasso, s = cv_lasso$lambda.min)
 coef_matrix <- matrix(coefficients[-1], nrow = 56)
 dim(coef_matrix) # 56 56
 
+# 生成平滑渐变颜色
+gradient_colors <- colorRampPalette(c("blue", "white", "red"))(100) # 100 个颜色
+
+# 设置 breaks
+min_val <- min(coef_matrix)
+max_val <- max(coef_matrix)
+breaks <- seq(min_val, max_val, length.out = 101) # 101 个断点（比颜色数多 1）
+
+# 绘制热图
 image(
     coef_matrix,
-    col = c("blue", "white", "red"), # 颜色梯度（蓝→白→红）
-    breaks = c(min(coef_matrix) - 10, -1e-12, 1e-12, max(coef_matrix) + 10),
-    axes = FALSE
+    col = gradient_colors, # 平滑渐变颜色
+    breaks = breaks, # 对应的断点
+    axes = FALSE,
 )
 
 dev.copy(jpeg, "Features/lasso_features.jpg", width = 1000, height = 1000, quality = 100)
