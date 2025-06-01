@@ -113,6 +113,26 @@ sum(predictions == y_test) / n_test
 
 
 # ======================= Analysis =======================
+library(ggplot2)
+library(reshape2)
+
+coefficients <- coef(cv_lasso, s = cv_lasso$lambda.min)
+# odds_ratios <- exp(coefficients)
+
+coef_matrix <- matrix(coefficients[-1], nrow = 56)
+dim(coef_matrix) # 56 56
+
+image(
+    coef_matrix,
+    col = c("blue", "white", "red"), # 颜色梯度（蓝→白→红）
+    breaks = c(min(coef_matrix) - 10, -1e-12, 1e-12, max(coef_matrix) + 10),
+    axes = FALSE
+)
+
+dev.copy(jpeg, "Features/lasso_features.jpg", width = 1000, height = 1000, quality = 100)
+dev.off()
+
+# ======================= Simple Feature =======================
 selected_features
 # 在原来 56 x 56 的图上标出这些被选出的位置
 featrues_img <- rep(0, 56 * 56)

@@ -311,6 +311,10 @@ pred_test  0  1
 
 经过 LASSO 回归挑选的重要变量构成的特征图：<a id="d1"></a>
 
+- 根据系数绘制特征图 $56 \times 56$ 等比例放大后，红色代表系数为正，蓝色代表系数为负，白色代表未被选中
+
+![LASSO Feature Figure](Features/lasso_features.jpg)
+
 - 压缩后的 $56 \times 56$ 的特征图
 
 ![LASSO 56x56 Feature Figure](Features/lasso_features56.png)
