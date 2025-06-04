@@ -20,3 +20,37 @@ __pycache__/
 # parameters
 checkpoints/*.pth
 !checkpoints/readme.md
+
+# ppt
+# LaTeX intermediate files
+*.aux
+*.log
+*.out
+*.toc
+*.bbl
+*.blg
+*.synctex.gz
+*.nav
+*.snm
+*.vrb
+*.fls
+*.fdb_latexmk
+*.lof
+*.lot
+
+# Output PDF (optional, remove if you want to track the final PDF)
+slides/*.pdf
+
+# Editor-specific files
+*.swp
+*.bak
+*~
+.vscode/
+.idea/
+
+# JetBrains and Python virtual environments (if present)
+__pycache__/
+*.pyc
+.venv/
+env/
+venv/
